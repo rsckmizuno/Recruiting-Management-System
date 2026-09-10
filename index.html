@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>派遣募集ボード（モック）</title>
+<style>
+:root{
+  --ink:#16202B; --ink2:#4A5866; --line:#D9DFE5; --bg:#F2F5F7; --panel:#FFFFFF;
+  --navy:#1F3A5F; --navy-2:#E8EEF6; --amber:#B7791F; --amber-2:#FBF1DC;
+  --green:#2E7D5B; --green-2:#E1F2EA; --red:#B23B3B; --red-2:#F7E3E3; --r:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;width:100%;background:#fff}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--navy);outline-offset:1px}
+textarea{resize:vertical;min-height:70px}
+label{display:block;font-size:12px;color:var(--ink2);margin-bottom:3px}
+.field{margin-bottom:10px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+header{background:var(--navy);color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header h1{font-size:16px;font-weight:600}
+header nav{display:flex;gap:4px;flex-wrap:wrap}
+header nav button{background:transparent;border:1px solid transparent;color:#fff;padding:5px 10px;border-radius:var(--r);font-size:13px;opacity:.8}
+header nav button.on{background:rgba(255,255,255,.15);opacity:1;border-color:rgba(255,255,255,.3)}
+.who{display:flex;align-items:center;gap:8px;font-size:12px;opacity:.9}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.notice{background:var(--amber-2);border-left:4px solid var(--amber);padding:8px 12px;border-radius:var(--r);margin-bottom:14px;font-size:13px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.toolbar select,.toolbar input{width:auto;min-width:130px}
+.btn{border:1px solid var(--navy);background:var(--navy);color:#fff;padding:8px 14px;border-radius:var(--r);font-weight:600}
+.btn.ghost{background:#fff;color:var(--navy)}
+.btn.danger{background:#fff;color:var(--red);border-color:var(--red)}
+.btn.sm{padding:5px 10px;font-size:12px;font-weight:500}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.list{display:grid;gap:10px}
+.job{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;border-left:4px solid var(--navy)}
+.job.closed{border-left-color:#9AA5AF;opacity:.7}
+.job.urgent{border-left-color:var(--red)}
+.job .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.job h3{font-size:15px;font-weight:600}
+.client{font-size:12px;color:var(--ink2)}
+.job .meta{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:13px;color:var(--ink2)}
+.job .meta b{color:var(--ink);font-weight:600}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.b-open{background:var(--green-2);color:var(--green)}
+.b-closed{background:#EDF0F2;color:#6B7680}
+.b-urgent{background:var(--red-2);color:var(--red)}
+.b-new{background:var(--amber-2);color:var(--amber)}
+.b-nav{background:var(--navy-2);color:var(--navy)}
+.badges{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.count{font-size:12px;color:var(--ink2);margin-left:auto}
+.empty{padding:40px;text-align:center;color:var(--ink2);background:#fff;border:1px dashed var(--line);border-radius:var(--r)}
+.detail,.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.panel+.panel{margin-top:14px}
+.panel h3{font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.back{background:none;border:none;color:var(--navy);padding:0;margin-bottom:10px;font-size:13px}
+.detail h2{font-size:18px;margin-bottom:2px}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;margin:12px 0;font-size:13px}
+.kv dt{color:var(--ink2)}.kv dd{font-weight:500;overflow-wrap:anywhere}
+.sec{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.sec h4{font-size:14px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.prop{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;background:#FAFBFC}
+.prop .hd{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.sheet{margin-top:6px;font-size:12px;color:var(--ink2);display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
+.sheet span:nth-child(odd){color:#8A94A0}
+.acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.thread{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;max-height:50vh;overflow:auto}
+.msg{max-width:85%;padding:7px 10px;border-radius:10px;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg .from{font-size:11px;opacity:.7;margin-bottom:1px}
+.msg.me{align-self:flex-end;background:var(--navy);color:#fff;border-bottom-right-radius:2px}
+.msg.them{align-self:flex-start;background:var(--navy-2);border-bottom-left-radius:2px}
+.send{display:flex;gap:6px}.send input{flex:1}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--ink2);font-weight:500;font-size:12px}
+.overlay{position:fixed;inset:0;background:rgba(22,32,43,.45);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.modal{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:12px 12px 0 0;padding:18px}
+.modal h3{font-size:16px;margin-bottom:12px}
+.modal .foot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.staff{border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.staff.sel{border-color:var(--navy);background:var(--navy-2)}
+.staff small{color:var(--ink2);display:block;font-size:12px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.toast.err{background:var(--red)}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--navy)}
+.login .card{background:#fff;border-radius:12px;padding:26px 24px;width:100%;max-width:400px}
+.login h2{font-size:18px;margin-bottom:4px}.login p{font-size:12px;color:var(--ink2);margin-bottom:16px}
+.accts{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--ink2)}
+.accts button{display:block;width:100%;text-align:left;background:#F7F9FB;border:1px solid var(--line);border-radius:var(--r);padding:6px 10px;margin-top:6px;font-size:12px;cursor:pointer}
+.accts code{color:var(--navy)}
+.err{color:var(--red);font-size:12px;margin-top:6px;min-height:1em}
+.live{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9AA5AF;margin-right:4px}.live.on{background:#5BD08F}
+@media(min-width:760px){.modal{border-radius:12px}.overlay{align-items:center}.kv{grid-template-columns:120px 1fr 120px 1fr}}
+@media(max-width:520px){.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header id="hdr" style="display:none">
+  <h1>派遣募集ボード</h1>
+  <nav id="nav"></nav>
+  <div class="who" id="who"></div>
+</header>
+<main id="app"></main>
+
+<script>
+
+/* ============ in-browser mock backend (no server needed) ============ */
+const SEED = {
+  clients:[{id:1,name:'さくら総合病院',contact_person:'人事課 田中'},{id:2,name:'ひまわり介護センター',contact_person:'施設長 佐藤'},{id:3,name:'みどりクリニック',contact_person:'事務長 鈴木'}],
+  users:[{id:1,login_id:'sales01',pw:'pass',display_name:'営業 高橋',role:'agency',client_id:null},{id:2,login_id:'sakura',pw:'pass',display_name:'人事課 田中',role:'client',client_id:1},{id:3,login_id:'himawari',pw:'pass',display_name:'施設長 佐藤',role:'client',client_id:2},{id:4,login_id:'midori',pw:'pass',display_name:'事務長 鈴木',role:'client',client_id:3}],
+  staff:[{id:1,name:'山田 花子',job_role:'看護師',qualifications:'正看護師',experience:'8年（急性期・外来）',availability:'週3〜4日',note:'夜勤可、電子カルテ経験あり',active:1},{id:2,name:'高橋 健',job_role:'看護師',qualifications:'正看護師',experience:'5年（療養病棟）',availability:'週5日',note:'日勤のみ希望',active:1},{id:3,name:'伊藤 美咲',job_role:'介護福祉士',qualifications:'介護福祉士・実務者研修',experience:'6年（特養・デイ）',availability:'週2〜3日',note:'早番対応可',active:1},{id:4,name:'渡辺 大輔',job_role:'理学療法士',qualifications:'理学療法士',experience:'4年（回復期）',availability:'週2日',note:'訪問リハ経験あり',active:1},{id:5,name:'中村 由紀',job_role:'医療事務',qualifications:'医療事務技能審査',experience:'10年',availability:'週5日',note:'レセプト経験豊富',active:1}],
+  jobs:[
+    {id:1,client_id:1,title:'外来看護師（日勤）',job_role:'看護師',qualification:'正看護師',rate:2800,facility:'本院 2階外来',days_per_week:'週3回',hours:'8:30〜17:30',contact_person:'人事課 田中',start_date:'2026-10-01',note:'採血・点滴業務あり。電子カルテ（富士通）使用。',urgent:1,status:'open',created_at:'2026-09-08 09:12'},
+    {id:2,client_id:1,title:'病棟看護師（夜勤あり）',job_role:'看護師',qualification:'正看護師',rate:3200,facility:'本院 5階病棟',days_per_week:'週4回',hours:'2交代（日勤/夜勤）',contact_person:'人事課 田中',start_date:'2026-10-15',note:'夜勤月4回程度。',urgent:0,status:'open',created_at:'2026-09-05 15:40'},
+    {id:3,client_id:2,title:'介護職員（早番）',job_role:'介護福祉士',qualification:'介護福祉士 または 初任者研修',rate:1900,facility:'第2ユニット',days_per_week:'週2回',hours:'7:00〜16:00',contact_person:'施設長 佐藤',start_date:'2026-09-20',note:'急募。送迎業務なし。',urgent:1,status:'open',created_at:'2026-09-09 08:05'},
+    {id:4,client_id:2,title:'理学療法士（機能訓練）',job_role:'理学療法士',qualification:'理学療法士',rate:2600,facility:'デイサービス棟',days_per_week:'週2回',hours:'9:00〜17:00',contact_person:'施設長 佐藤',start_date:'2026-10-01',note:'',urgent:0,status:'open',created_at:'2026-09-02 11:20'},
+    {id:5,client_id:3,title:'医療事務（受付）',job_role:'医療事務',qualification:'不問（経験者優遇）',rate:1700,facility:'本院受付',days_per_week:'週5回',hours:'9:00〜18:00',contact_person:'事務長 鈴木',start_date:'2026-09-16',note:'',urgent:0,status:'closed',created_at:'2026-08-20 10:00'}],
+  proposals:[{id:1,job_id:1,staff_id:1,status:'reviewing',comment:'外来経験8年で即戦力です。',created_at:'2026-09-08 14:10'},{id:2,job_id:4,staff_id:4,status:'accepted',comment:'',created_at:'2026-09-03 10:00'},{id:3,job_id:5,staff_id:5,status:'declined',comment:'',created_at:'2026-08-22 09:30'}],
+  messages:[{id:1,job_id:1,user_id:1,sender_role:'agency',body:'山田さんのスキルシートを提出しました。外来経験8年で即戦力です。',created_at:'2026-09-08 14:10'},{id:2,job_id:1,user_id:2,sender_role:'client',body:'ありがとうございます。来週面談できますか？',created_at:'2026-09-08 16:32'},{id:3,job_id:4,user_id:1,sender_role:'agency',body:'渡辺さんをご提案します。',created_at:'2026-09-03 10:00'},{id:4,job_id:4,user_id:3,sender_role:'client',body:'採用で進めます。',created_at:'2026-09-04 09:15'}],
+  session:null
+};
+const STORE_KEY='haken-board-mock-v1';
+let DB;
+function loadDB(){ try{ const s=localStorage.getItem(STORE_KEY); DB = s?JSON.parse(s):JSON.parse(JSON.stringify(SEED)); }catch{ DB=JSON.parse(JSON.stringify(SEED)); } }
+function saveDB(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(DB)); }catch{} }
+function resetDB(){ try{ localStorage.removeItem(STORE_KEY); }catch{} loadDB(); location.reload(); }
+loadDB();
+const nowStr=()=>{ const d=new Date(), p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+const nextId=t=>DB[t].reduce((m,r)=>Math.max(m,r.id),0)+1;
+const curUser=()=>DB.session ? DB.users.find(u=>u.id===DB.session) : null;
+const pubUser=u=>({id:u.id,login_id:u.login_id,display_name:u.display_name,role:u.role,client_id:u.client_id});
+const fail=(status,error)=>({status,data:{error}});
+const ok=(data,status=200)=>({status,data});
+function visibleJob(u,id){ const j=DB.jobs.find(x=>x.id===Number(id)); if(!j) return null; if(u.role==='client'&&j.client_id!==u.client_id) return null; return j; }
+
+function mockApi(method,url,body){
+  const [path,qs]=url.split('?'); const q=Object.fromEntries(new URLSearchParams(qs||''));
+  const u=curUser();
+  const m=(re)=>path.match(re);
+  if(method==='POST'&&path==='/api/login'){
+    const usr=DB.users.find(x=>x.login_id===String(body.login_id||'').trim()&&x.pw===String(body.password||''));
+    if(!usr) return fail(401,'IDまたはパスワードが違います');
+    DB.session=usr.id; saveDB(); return ok(pubUser(usr));
+  }
+  if(method==='POST'&&path==='/api/logout'){ DB.session=null; saveDB(); return ok({ok:true}); }
+  if(!u) return fail(401,'ログインが必要です');
+  const agency=()=>u.role==='agency'?null:fail(403,'弊社担当者のみ操作できます');
+  const client=()=>u.role==='client'?null:fail(403,'取引先アカウントのみ操作できます');
+  let r, mm;
+  if(method==='GET'&&path==='/api/me'){ return ok({...pubUser(u),client:u.client_id?DB.clients.find(c=>c.id===u.client_id):null}); }
+  if(method==='POST'&&path==='/api/me/password'){
+    if(u.pw!==String(body.current||'')) return fail(400,'現在のパスワードが違います');
+    if(!body.next||String(body.next).length<6) return fail(400,'新しいパスワードは6文字以上にしてください');
+    u.pw=String(body.next); saveDB(); return ok({ok:true});
+  }
+  if(path==='/api/clients'&&method==='GET'){ if(r=agency()) return r;
+    return ok(DB.clients.map(c=>({...c,open_jobs:DB.jobs.filter(j=>j.client_id===c.id&&j.status==='open').length,logins:DB.users.filter(x=>x.client_id===c.id).map(x=>x.login_id).join(', ')}))); }
+  if(path==='/api/clients'&&method==='POST'){ if(r=agency()) return r;
+    if(!body.name||!body.login_id||!body.password) return fail(400,'取引先名・ログインID・パスワードは必須です');
+    if(DB.users.some(x=>x.login_id===body.login_id)) return fail(409,'そのログインIDは既に使われています');
+    const cid=nextId('clients'); DB.clients.push({id:cid,name:body.name,contact_person:body.contact_person||''});
+    DB.users.push({id:nextId('users'),login_id:body.login_id,pw:String(body.password),display_name:body.display_name||body.contact_person||body.name,role:'client',client_id:cid});
+    saveDB(); return ok({id:cid},201); }
+  if(path==='/api/staff'&&method==='GET'){ if(r=agency()) return r; return ok(DB.staff.filter(s=>s.active)); }
+  if(path==='/api/staff'&&method==='POST'){ if(r=agency()) return r;
+    if(!body.name||!body.job_role) return fail(400,'氏名と職種は必須です');
+    const id=nextId('staff'); DB.staff.push({id,name:body.name,job_role:body.job_role,qualifications:body.qualifications||'',experience:body.experience||'',availability:body.availability||'',note:body.note||'',active:1}); saveDB(); return ok({id},201); }
+  if(path==='/api/jobs'&&method==='GET'){
+    let rows=DB.jobs.filter(j=>u.role==='client'?j.client_id===u.client_id:(q.client_id?j.client_id===Number(q.client_id):true));
+    rows=rows.map(j=>{ const ms=DB.messages.filter(x=>x.job_id===j.id); const last=ms[ms.length-1];
+      return {...j,client_name:DB.clients.find(c=>c.id===j.client_id)?.name||'',proposal_count:DB.proposals.filter(p=>p.job_id===j.id).length,reviewing_count:DB.proposals.filter(p=>p.job_id===j.id&&p.status==='reviewing').length,last_sender:last?last.sender_role:null,last_message_at:last?last.created_at:null}; });
+    rows.sort((a,b)=>((b.status==='open')-(a.status==='open'))||(b.urgent-a.urgent)||b.created_at.localeCompare(a.created_at));
+    return ok(rows); }
+  if(path==='/api/jobs'&&method==='POST'){ if(r=client()) return r;
+    if(!body.title||!body.job_role) return fail(400,'募集タイトルと職種は必須です');
+    const id=nextId('jobs'); DB.jobs.push({id,client_id:u.client_id,title:body.title,job_role:body.job_role,qualification:body.qualification||'',rate:Number(body.rate)||0,facility:body.facility||'',days_per_week:body.days_per_week||'',hours:body.hours||'',contact_person:body.contact_person||'',start_date:body.start_date||'',note:body.note||'',urgent:body.urgent?1:0,status:'open',created_at:nowStr()}); saveDB(); return ok({id},201); }
+  if((mm=m(/^\/api\/jobs\/(\d+)$/))&&method==='GET'){ const j=visibleJob(u,mm[1]); if(!j) return fail(404,'募集が見つかりません');
+    const proposals=DB.proposals.filter(p=>p.job_id===j.id).map(p=>{ const s=DB.staff.find(x=>x.id===p.staff_id); return {...p,staff_name:s.name,job_role:s.job_role,qualifications:s.qualifications,experience:s.experience,availability:s.availability,staff_note:s.note}; });
+    const messages=DB.messages.filter(x=>x.job_id===j.id).map(x=>{ const us=DB.users.find(z=>z.id===x.user_id); return {...x,display_name:us?us.display_name:''}; });
+    return ok({...j,client_name:DB.clients.find(c=>c.id===j.client_id)?.name||'',proposals,messages}); }
+  if((mm=m(/^\/api\/jobs\/(\d+)$/))&&method==='PATCH'){ const j=visibleJob(u,mm[1]); if(!j) return fail(404,'募集が見つかりません');
+    const allowed=u.role==='client'?['title','job_role','qualification','rate','facility','days_per_week','hours','contact_person','start_date','note','urgent','status']:['status'];
+    for(const k of allowed) if(k in body) j[k]=k==='urgent'?(body[k]?1:0):k==='rate'?Number(body[k])||0:body[k];
+    saveDB(); return ok({ok:true}); }
+  if((mm=m(/^\/api\/jobs\/(\d+)\/proposals$/))&&method==='POST'){ if(r=agency()) return r; const j=visibleJob(u,mm[1]); if(!j) return fail(404,'募集が見つかりません');
+    if(j.status!=='open') return fail(400,'終了した募集には提案できません');
+    const s=DB.staff.find(x=>x.id===Number(body.staff_id)); if(!s) return fail(400,'スタッフが見つかりません');
+    if(DB.proposals.some(p=>p.job_id===j.id&&p.staff_id===s.id)) return fail(409,'このスタッフは既に提案済みです');
+    DB.proposals.push({id:nextId('proposals'),job_id:j.id,staff_id:s.id,status:'reviewing',comment:body.comment||'',created_at:nowStr()});
+    DB.messages.push({id:nextId('messages'),job_id:j.id,user_id:u.id,sender_role:'agency',body:`${s.name}さんのスキルシートを提出しました。${body.comment?' '+body.comment:''}`,created_at:nowStr()});
+    saveDB(); return ok({ok:true},201); }
+  if((mm=m(/^\/api\/proposals\/(\d+)$/))&&method==='PATCH'){ if(r=client()) return r;
+    const p=DB.proposals.find(x=>x.id===Number(mm[1])); const j=p&&DB.jobs.find(x=>x.id===p.job_id);
+    if(!p||j.client_id!==u.client_id) return fail(404,'提案が見つかりません');
+    const s=DB.staff.find(x=>x.id===p.staff_id); p.status=body.status;
+    const text=body.status==='accepted'?`${s.name}さん、面談・採用の方向で進めます。`:`${s.name}さんは今回見送らせてください。`;
+    DB.messages.push({id:nextId('messages'),job_id:j.id,user_id:u.id,sender_role:'client',body:text,created_at:nowStr()});
+    saveDB(); return ok({ok:true}); }
+  if((mm=m(/^\/api\/jobs\/(\d+)\/messages$/))&&method==='POST'){ const j=visibleJob(u,mm[1]); if(!j) return fail(404,'募集が見つかりません');
+    const b=String(body.body||'').trim(); if(!b) return fail(400,'メッセージを入力してください');
+    const id=nextId('messages'); DB.messages.push({id,job_id:j.id,user_id:u.id,sender_role:u.role,body:b,created_at:nowStr()}); saveDB(); return ok({id},201); }
+  return fail(404,'Not found');
+}
+async function api(method, url, body){
+  const r = mockApi(method, url, body||{});
+  if(r.status===401 && !url.endsWith('/login')){ S.user=null; render(); throw new Error('ログインが必要です'); }
+  if(r.status>=400) throw new Error(r.data.error||'エラー');
+  return r.data;
+}
+
+const get=u=>api('GET',u), post=(u,b)=>api('POST',u,b||{}), patch=(u,b)=>api('PATCH',u,b);
+
+/* ============ state ============ */
+const S = { user:null, page:'jobs', view:'list', jobs:[], job:null, clients:[], staff:[], filter:{client:'',role:'',status:'open',q:''}, modal:null, pick:null, live:false };
+const esc = s => String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const yen = n => (Number(n)||0).toLocaleString('ja-JP')+'円/h';
+const isAgency = () => S.user?.role==='agency';
+const fmtDT = s => s ? s.slice(5,16).replace('-','/') : '';
+function toast(t, err){ const el=document.createElement('div'); el.className='toast'+(err?' err':''); el.textContent=t; document.body.appendChild(el); setTimeout(()=>el.remove(),2600); }
+async function run(fn){ try{ await fn(); }catch(e){ toast(e.message, true); } }
+
+/* ============ realtime ============ */
+let es={close(){}};
+function connectEvents(){ S.live=true; }
+
+/* ============ loaders ============ */
+async function loadJobs(){
+  const qs = isAgency() && S.filter.client ? `?client_id=${S.filter.client}` : '';
+  S.jobs = await get('/api/jobs'+qs); render();
+}
+async function loadJob(id){ S.job = await get('/api/jobs/'+id); render(); scrollThread(); }
+async function loadAdmin(){ [S.clients, S.staff] = await Promise.all([get('/api/clients'), get('/api/staff')]); render(); }
+async function boot(){
+  try{ S.user = await get('/api/me'); }catch{ S.user=null; render(); return; }
+  connectEvents(); await loadJobs();
+}
+
+/* ============ render ============ */
+function render(){
+  const app=document.getElementById('app'), hdr=document.getElementById('hdr');
+  if(!S.user){ hdr.style.display='none'; app.style.cssText='max-width:none;padding:0'; app.innerHTML=renderLogin(); return; }
+  hdr.style.display=''; app.style.cssText='';
+  renderWho();
+  document.getElementById('nav').innerHTML = `
+    <button class="${S.page==='jobs'?'on':''}" onclick="go('jobs')">募集一覧</button>
+    ${isAgency()?`<button class="${S.page==='admin'?'on':''}" onclick="go('admin')">取引先・スタッフ管理</button>`:''}
+    <button class="${S.page==='account'?'on':''}" onclick="go('account')">アカウント</button>`;
+  app.innerHTML = S.page==='admin' ? renderAdmin() : S.page==='account' ? renderAccount() : (S.view==='detail' && S.job) ? renderDetail() : renderList();
+  if(S.modal) app.insertAdjacentHTML('beforeend', S.modal==='newjob'?renderNewJob():S.modal==='propose'?renderPropose():S.modal==='newclient'?renderNewClient():S.modal==='newstaff'?renderNewStaff():'');
+}
+function renderWho(){
+  const u=S.user; if(!u) return;
+  const org = u.role==='agency' ? '弊社' : (u.client?.name||'');
+  document.getElementById('who').innerHTML = `<span class="live ${S.live?'on':''}" title="${S.live?'リアルタイム接続中':'再接続中'}"></span><span>${esc(org)}／${esc(u.display_name)}</span><button class="btn ghost sm" onclick="logout()">ログアウト</button>`;
+}
+function go(p){ S.page=p; S.modal=null; if(p==='jobs'){S.view='list';loadJobs();} else if(p==='admin') loadAdmin(); else render(); }
+
+function renderLogin(){
+  return `<div class="login"><div class="card">
+    <h2>派遣募集ボード</h2><p>発行されたIDとパスワードでログインしてください。</p>
+    <div class="field"><label>ログインID</label><input id="l_id" autocomplete="username" autocapitalize="off"></div>
+    <div class="field"><label>パスワード</label><input id="l_pw" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
+    <button class="btn" style="width:100%" onclick="login()">ログイン</button>
+    <div class="err" id="l_err"></div>
+    <div class="accts">サンプル用アカウント（パスワードはすべて <code>pass</code>）
+      ${DB.users.filter(x=>x.id<=4).map(a=>`<button onclick="fill('${a.login_id}')">${a.role==='agency'?'弊社 営業担当（全社閲覧・管理）':esc((DB.clients.find(c=>c.id===a.client_id)||{}).name)+'（取引先）'} <code>${a.login_id}</code></button>`).join('')}
+      <button onclick="resetDB()" style="color:#B23B3B">データを初期状態に戻す</button>
+    </div>
+  </div></div>`;
+}
+function fill(id){ document.getElementById('l_id').value=id; document.getElementById('l_pw').value='pass'; login(); }
+function login(){ run(async()=>{
+  const login_id=document.getElementById('l_id').value.trim(), password=document.getElementById('l_pw').value;
+  try{ await post('/api/login',{login_id,password}); }catch(e){ document.getElementById('l_err').textContent=e.message; return; }
+  S.page='jobs'; S.view='list'; S.filter={client:'',role:'',status:'open',q:''}; await boot();
+});}
+function logout(){ run(async()=>{ await post('/api/logout'); if(es) es.close(); S.user=null; S.live=false; render(); }); }
+
+function renderList(){
+  let list = S.jobs;
+  if(S.filter.role) list=list.filter(j=>j.job_role===S.filter.role);
+  if(S.filter.status) list=list.filter(j=>j.status===S.filter.status);
+  if(S.filter.q) list=list.filter(j=>[j.title,j.facility,j.qualification,j.note,j.client_name].join(' ').includes(S.filter.q));
+  const roles=[...new Set(S.jobs.map(j=>j.job_role))];
+  const notice = isAgency()
+    ? `<div class="notice">全取引先の募集をリアルタイムで表示しています。募集を開いてスキルシートを提出し、取引先とやりとりできます。</div>`
+    : `<div class="notice">${esc(S.user.client?.name)} の募集のみ表示されています。登録した募集は弊社営業に即時共有されます。</div>`;
+  return notice+`
+  <div class="toolbar">
+    ${isAgency()?`<select onchange="S.filter.client=this.value;loadJobs()">
+      <option value="">すべての取引先</option>
+      ${clientOptions()}</select>`
+    :`<button class="btn" onclick="S.modal='newjob';render()">＋ 募集を登録</button>`}
+    <select onchange="S.filter.role=this.value;render()"><option value="">すべての職種</option>${roles.map(r=>`<option ${S.filter.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select>
+    <select onchange="S.filter.status=this.value;render()">
+      <option value="open" ${S.filter.status==='open'?'selected':''}>募集中</option>
+      <option value="closed" ${S.filter.status==='closed'?'selected':''}>終了</option>
+      <option value="" ${S.filter.status===''?'selected':''}>すべて</option></select>
+    <input placeholder="キーワード" value="${esc(S.filter.q)}" oninput="S.filter.q=this.value;render()">
+    <span class="count">${list.length}件</span>
+  </div>
+  <div class="list">${list.length?list.map(jobCard).join(''):`<div class="empty">該当する募集はありません。${isAgency()?'':'「募集を登録」から追加できます。'}</div>`}</div>`;
+}
+function clientOptions(){
+  const names=[...new Map(S.jobs.map(j=>[j.client_id,j.client_name])).entries()];
+  const src = S.clients.length ? S.clients.map(c=>[c.id,c.name]) : names;
+  return src.map(([id,n])=>`<option value="${id}" ${String(S.filter.client)===String(id)?'selected':''}>${esc(n)}</option>`).join('');
+}
+function jobCard(j){
+  const mine=isAgency()?'agency':'client';
+  const unread = j.last_sender && j.last_sender!==mine;
+  return `<div class="job ${j.status==='closed'?'closed':''} ${j.urgent&&j.status==='open'?'urgent':''}" onclick="openJob(${j.id})">
+    <div class="top"><div>${isAgency()?`<div class="client">${esc(j.client_name)}</div>`:''}<h3>${esc(j.title)}</h3></div>
+      <div class="badges">
+        ${j.urgent&&j.status==='open'?'<span class="badge b-urgent">急募</span>':''}
+        <span class="badge ${j.status==='open'?'b-open':'b-closed'}">${j.status==='open'?'募集中':'終了'}</span>
+        ${j.reviewing_count?`<span class="badge b-new">提案${j.reviewing_count}件 確認待ち</span>`:''}
+        ${unread?'<span class="badge b-nav">新着メッセージ</span>':''}
+      </div></div>
+    <div class="meta">
+      <span>職種 <b>${esc(j.job_role)}</b></span><span>資格 <b>${esc(j.qualification)||'—'}</b></span><span>単価 <b>${yen(j.rate)}</b></span>
+      <span>施設 <b>${esc(j.facility)||'—'}</b></span><span>頻度 <b>${esc(j.days_per_week)||'—'}</b></span><span>時間 <b>${esc(j.hours)||'—'}</b></span>
+      <span>開始 <b>${esc(j.start_date)||'—'}</b></span><span>担当 <b>${esc(j.contact_person)||'—'}</b></span>
+    </div></div>`;
+}
+function openJob(id){ run(async()=>{ S.view='detail'; await loadJob(id); }); }
+function scrollThread(){ const t=document.querySelector('.thread'); if(t) t.scrollTop=t.scrollHeight; }
+
+function renderDetail(){
+  const j=S.job, mine=isAgency()?'agency':'client';
+  const stL={reviewing:'確認待ち',accepted:'採用',declined:'見送り'}, stC={reviewing:'b-new',accepted:'b-open',declined:'b-closed'};
+  return `<div class="detail">
+    <button class="back" onclick="S.view='list';S.job=null;loadJobs()">← 一覧に戻る</button>
+    ${isAgency()?`<div class="client">${esc(j.client_name)}</div>`:''}
+    <h2>${esc(j.title)}</h2>
+    <div class="badges" style="justify-content:flex-start;margin-top:4px">${j.urgent?'<span class="badge b-urgent">急募</span>':''}<span class="badge ${j.status==='open'?'b-open':'b-closed'}">${j.status==='open'?'募集中':'終了'}</span></div>
+    <dl class="kv">
+      <dt>職種</dt><dd>${esc(j.job_role)}</dd><dt>必須資格</dt><dd>${esc(j.qualification)||'—'}</dd>
+      <dt>派遣単価</dt><dd>${yen(j.rate)}</dd><dt>募集施設</dt><dd>${esc(j.facility)||'—'}</dd>
+      <dt>週回数</dt><dd>${esc(j.days_per_week)||'—'}</dd><dt>勤務時間</dt><dd>${esc(j.hours)||'—'}</dd>
+      <dt>開始希望日</dt><dd>${esc(j.start_date)||'—'}</dd><dt>先方担当者</dt><dd>${esc(j.contact_person)||'—'}</dd>
+      <dt>登録日</dt><dd>${fmtDT(j.created_at)}</dd><dt>備考</dt><dd>${esc(j.note)||'—'}</dd>
+    </dl>
+    ${!isAgency()?(j.status==='open'?`<button class="btn ghost sm" onclick="setStatus(${j.id},'closed')">この募集を終了する</button>`:`<button class="btn ghost sm" onclick="setStatus(${j.id},'open')">募集を再開する</button>`):''}
+    <div class="sec">
+      <h4>提案・スキルシート <span class="badge b-nav">${j.proposals.length}件</span>
+        ${isAgency()&&j.status==='open'?`<button class="btn sm" style="margin-left:auto" onclick="openPropose()">スキルシートを提出</button>`:''}</h4>
+      ${j.proposals.length?j.proposals.map(p=>`<div class="prop">
+          <div class="hd"><strong>${esc(p.staff_name)}</strong><span class="client">${esc(p.job_role)}・提出 ${fmtDT(p.created_at)}</span><span class="badge ${stC[p.status]}">${stL[p.status]}</span></div>
+          <div class="sheet"><span>保有資格</span><span>${esc(p.qualifications)||'—'}</span><span>経験</span><span>${esc(p.experience)||'—'}</span><span>稼働可能</span><span>${esc(p.availability)||'—'}</span><span>備考</span><span>${esc(p.staff_note)||'—'}</span>${p.comment?`<span>推薦コメント</span><span>${esc(p.comment)}</span>`:''}</div>
+          ${!isAgency()&&p.status==='reviewing'?`<div class="acts"><button class="btn sm" onclick="decide(${p.id},'accepted')">面談・採用へ進める</button><button class="btn ghost sm" onclick="decide(${p.id},'declined')">見送る</button></div>`:''}
+        </div>`).join('')
+      :`<div class="empty" style="padding:18px">${isAgency()?'まだ提案していません。候補者のスキルシートを提出しましょう。':'まだ提案は届いていません。'}</div>`}
+    </div>
+    <div class="sec"><h4>やりとり</h4>
+      <div class="thread">${j.messages.map(m=>`<div class="msg ${m.sender_role===mine?'me':'them'}"><div class="from">${m.sender_role==='agency'?'弊社 ':''}${esc(m.display_name)}・${fmtDT(m.created_at)}</div>${esc(m.body)}</div>`).join('')||'<div class="client">まだメッセージはありません。</div>'}</div>
+      <div class="send"><input id="msgIn" placeholder="メッセージを入力" onkeydown="if(event.key==='Enter'&&!event.isComposing)sendMsg()"><button class="btn" onclick="sendMsg()">送信</button></div>
+    </div></div>`;
+}
+function setStatus(id,status){ run(async()=>{ await patch('/api/jobs/'+id,{status}); toast(status==='closed'?'募集を終了しました':'募集を再開しました'); await loadJob(id); }); }
+function decide(pid,status){ run(async()=>{ await patch('/api/proposals/'+pid,{status}); toast(status==='accepted'?'採用へ進めました':'見送りにしました'); await loadJob(S.job.id); }); }
+function sendMsg(){ run(async()=>{ const inp=document.getElementById('msgIn'); const body=inp.value.trim(); if(!body) return; inp.value=''; await post(`/api/jobs/${S.job.id}/messages`,{body}); await loadJob(S.job.id); }); }
+
+function renderNewJob(){
+  return `<div class="overlay" onclick="if(event.target===this){S.modal=null;render()}"><div class="modal">
+    <h3>募集を登録</h3>
+    <div class="field"><label>募集タイトル *</label><input id="f_title" placeholder="例：外来看護師（日勤）"></div>
+    <div class="row">
+      <div class="field"><label>職種 *</label><select id="f_role"><option>看護師</option><option>准看護師</option><option>介護福祉士</option><option>介護職員</option><option>理学療法士</option><option>作業療法士</option><option>言語聴覚士</option><option>医療事務</option><option>薬剤師</option><option>その他</option></select></div>
+      <div class="field"><label>必須資格</label><input id="f_qual" placeholder="例：正看護師"></div>
+      <div class="field"><label>派遣単価（円/時）</label><input id="f_rate" type="number" inputmode="numeric" placeholder="2800"></div>
+      <div class="field"><label>募集施設</label><input id="f_fac" placeholder="例：本院 2階外来"></div>
+      <div class="field"><label>週回数</label><select id="f_days"><option>週1回</option><option>週2回</option><option selected>週3回</option><option>週4回</option><option>週5回</option><option>応相談</option></select></div>
+      <div class="field"><label>勤務時間</label><input id="f_hours" placeholder="例：8:30〜17:30"></div>
+      <div class="field"><label>開始希望日</label><input id="f_start" type="date"></div>
+      <div class="field"><label>担当者</label><input id="f_person" value="${esc(S.user.client?.contact_person||S.user.display_name)}"></div>
+    </div>
+    <div class="field"><label>備考</label><textarea id="f_note" placeholder="業務内容、使用システム、条件など"></textarea></div>
+    <div class="field"><label><input type="checkbox" id="f_urgent" style="width:auto;margin-right:6px">急募として掲載する</label></div>
+    <div class="foot"><button class="btn ghost" onclick="S.modal=null;render()">キャンセル</button><button class="btn" onclick="saveJob()">登録して公開</button></div>
+  </div></div>`;
+}
+function saveJob(){ run(async()=>{
+  const v=id=>document.getElementById(id).value.trim();
+  await post('/api/jobs',{title:v('f_title'),job_role:v('f_role'),qualification:v('f_qual'),rate:v('f_rate'),facility:v('f_fac'),days_per_week:v('f_days'),hours:v('f_hours'),start_date:v('f_start'),contact_person:v('f_person'),note:v('f_note'),urgent:document.getElementById('f_urgent').checked});
+  S.modal=null; S.filter.status='open'; toast('募集を公開しました'); await loadJobs();
+});}
+
+function openPropose(){ run(async()=>{ if(!S.staff.length) S.staff=await get('/api/staff'); S.pick=null; S.modal='propose'; render(); }); }
+function renderPropose(){
+  const j=S.job, done=new Set(j.proposals.map(p=>p.staff_id));
+  const c=S.staff.filter(s=>!done.has(s.id)).sort((a,b)=>(b.job_role===j.job_role)-(a.job_role===j.job_role));
+  return `<div class="overlay" onclick="if(event.target===this){S.modal=null;render()}"><div class="modal">
+    <h3>スキルシートを提出 — ${esc(j.title)}</h3>
+    <p class="client" style="margin-bottom:8px">職種が一致する候補者を上に表示しています。</p>
+    ${c.length?c.map(s=>`<div class="staff ${S.pick===s.id?'sel':''}" onclick="S.pick=${s.id};render()">
+      <div><strong>${esc(s.name)}</strong> <span class="badge ${s.job_role===j.job_role?'b-open':'b-closed'}">${esc(s.job_role)}</span><small>${esc(s.qualifications)}／${esc(s.experience)}／${esc(s.availability)}</small></div><span>${S.pick===s.id?'✓':''}</span></div>`).join('')
+    :'<div class="empty" style="padding:18px">提案できるスタッフがいません。管理画面から登録してください。</div>'}
+    <div class="field" style="margin-top:10px"><label>取引先へのコメント</label><textarea id="p_msg" placeholder="推薦理由など"></textarea></div>
+    <div class="foot"><button class="btn ghost" onclick="S.modal=null;render()">キャンセル</button><button class="btn" ${S.pick?'':'disabled'} onclick="submitProposal()">提出する</button></div>
+  </div></div>`;
+}
+function submitProposal(){ run(async()=>{
+  await post(`/api/jobs/${S.job.id}/proposals`,{staff_id:S.pick,comment:document.getElementById('p_msg').value.trim()});
+  S.modal=null; toast('スキルシートを提出しました'); await loadJob(S.job.id);
+});}
+
+/* ---- admin ---- */
+function renderAdmin(){
+  return `<div class="panel"><h3>取引先とログインアカウント <button class="btn sm" style="margin-left:auto" onclick="S.modal='newclient';render()">＋ 取引先を追加</button></h3>
+    <table><thead><tr><th>取引先</th><th>担当者</th><th>ログインID</th><th>募集中</th></tr></thead><tbody>
+    ${S.clients.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.contact_person)}</td><td>${esc(c.logins||'—')}</td><td>${c.open_jobs}件</td></tr>`).join('')||'<tr><td colspan="4">取引先はまだありません</td></tr>'}
+    </tbody></table></div>
+  <div class="panel"><h3>派遣スタッフ（スキルシート） <button class="btn sm" style="margin-left:auto" onclick="S.modal='newstaff';render()">＋ スタッフを追加</button></h3>
+    <table><thead><tr><th>氏名</th><th>職種</th><th>資格</th><th>経験</th><th>稼働</th><th>備考</th></tr></thead><tbody>
+    ${S.staff.map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.job_role)}</td><td>${esc(s.qualifications)}</td><td>${esc(s.experience)}</td><td>${esc(s.availability)}</td><td>${esc(s.note)}</td></tr>`).join('')||'<tr><td colspan="6">スタッフはまだ登録されていません</td></tr>'}
+    </tbody></table></div>`;
+}
+function renderNewClient(){
+  return `<div class="overlay" onclick="if(event.target===this){S.modal=null;render()}"><div class="modal"><h3>取引先を追加</h3>
+    <div class="field"><label>取引先名 *</label><input id="c_name"></div>
+    <div class="field"><label>担当者名</label><input id="c_person" placeholder="例：人事課 田中"></div>
+    <div class="row"><div class="field"><label>ログインID *</label><input id="c_login" autocapitalize="off"></div><div class="field"><label>初期パスワード *（6文字以上）</label><input id="c_pw"></div></div>
+    <div class="foot"><button class="btn ghost" onclick="S.modal=null;render()">キャンセル</button><button class="btn" onclick="saveClient()">追加する</button></div></div></div>`;
+}
+function saveClient(){ run(async()=>{
+  const v=id=>document.getElementById(id).value.trim();
+  await post('/api/clients',{name:v('c_name'),contact_person:v('c_person'),login_id:v('c_login'),password:v('c_pw'),display_name:v('c_person')});
+  S.modal=null; toast('取引先を追加しました'); await loadAdmin();
+});}
+function renderNewStaff(){
+  return `<div class="overlay" onclick="if(event.target===this){S.modal=null;render()}"><div class="modal"><h3>スタッフを追加</h3>
+    <div class="row"><div class="field"><label>氏名 *</label><input id="s_name"></div><div class="field"><label>職種 *</label><input id="s_role" placeholder="例：看護師"></div>
+    <div class="field"><label>保有資格</label><input id="s_qual"></div><div class="field"><label>経験</label><input id="s_exp" placeholder="例：8年（急性期・外来）"></div>
+    <div class="field"><label>稼働可能</label><input id="s_avail" placeholder="例：週3〜4日"></div></div>
+    <div class="field"><label>備考</label><textarea id="s_note"></textarea></div>
+    <div class="foot"><button class="btn ghost" onclick="S.modal=null;render()">キャンセル</button><button class="btn" onclick="saveStaff()">追加する</button></div></div></div>`;
+}
+function saveStaff(){ run(async()=>{
+  const v=id=>document.getElementById(id).value.trim();
+  await post('/api/staff',{name:v('s_name'),job_role:v('s_role'),qualifications:v('s_qual'),experience:v('s_exp'),availability:v('s_avail'),note:v('s_note')});
+  S.modal=null; toast('スタッフを追加しました'); await loadAdmin();
+});}
+
+/* ---- account ---- */
+function renderAccount(){
+  return `<div class="panel"><h3>アカウント</h3>
+    <dl class="kv"><dt>ログインID</dt><dd>${esc(S.user.login_id)}</dd><dt>表示名</dt><dd>${esc(S.user.display_name)}</dd><dt>所属</dt><dd>${isAgency()?'弊社（営業担当）':esc(S.user.client?.name)}</dd></dl></div>
+  <div class="panel"><h3>パスワード変更</h3>
+    <div class="row"><div class="field"><label>現在のパスワード</label><input id="pw_cur" type="password"></div><div class="field"><label>新しいパスワード（6文字以上）</label><input id="pw_new" type="password"></div></div>
+    <button class="btn" onclick="changePw()">変更する</button></div>`;
+}
+function changePw(){ run(async()=>{ await post('/api/me/password',{current:document.getElementById('pw_cur').value,next:document.getElementById('pw_new').value}); toast('パスワードを変更しました'); render(); }); }
+
+boot();
+</script>
+</body>
+</html>
